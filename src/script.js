@@ -10,124 +10,136 @@ let gui, params
 
 init();
 
-		function init() {
+    function init() {
 
-			const aspectRatio = window.innerWidth / window.innerHeight;
+        const aspectRatio = window.innerWidth / window.innerHeight;
 
-			camera = new THREE.OrthographicCamera( - aspectRatio, aspectRatio, 1, - 1, 0.1, 10 );
-			camera.position.y = 2 * Math.tan( Math.PI / 6 );
-			camera.position.z = 2;
+        camera = new THREE.OrthographicCamera( - aspectRatio, aspectRatio, 1, - 1, 0.1, 10 );
+        camera.position.y = 2 * Math.tan( Math.PI / 6 );
+        camera.position.z = 2;
 
-			scene = new THREE.Scene();
-			scene.background = new THREE.Color( 0x151729 );
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color( 0x151729 );
 
-			clock = new THREE.Clock();
+        clock = new THREE.Clock();
 
-			renderer = new THREE.WebGLRenderer();
-			renderer.shadowMap.enabled = true;
-			//renderer.setPixelRatio( window.devicePixelRatio );
-			renderer.setSize( window.innerWidth, window.innerHeight );
-			renderer.setAnimationLoop( animate );
-			document.body.appendChild( renderer.domElement );
+        renderer = new THREE.WebGLRenderer();
+        renderer.shadowMap.enabled = true;
+        //renderer.setPixelRatio( window.devicePixelRatio );
+        renderer.setSize( window.innerWidth, window.innerHeight );
+        renderer.setAnimationLoop( animate );
+        document.body.appendChild( renderer.domElement );
 
-			composer = new EffectComposer( renderer );
-			const renderPixelatedPass = new RenderPixelatedPass( 6, scene, camera );
-			composer.addPass( renderPixelatedPass );
+        composer = new EffectComposer( renderer );
+        const renderPixelatedPass = new RenderPixelatedPass( 6, scene, camera );
+        composer.addPass( renderPixelatedPass );
 
-			const outputPass = new OutputPass();
-			composer.addPass( outputPass );
+        const outputPass = new OutputPass();
+        composer.addPass( outputPass );
 
-			window.addEventListener( 'resize', onWindowResize );
+        window.addEventListener( 'resize', onWindowResize );
 
-			const controls = new OrbitControls( camera, renderer.domElement );
-			controls.maxZoom = 2;
+        const controls = new OrbitControls( camera, renderer.domElement );
+        controls.maxZoom = 2;
 
-			// gui
+        // gui
 
-			gui = new GUI();
-			params = { pixelSize: 6, normalEdgeStrength: .3, depthEdgeStrength: .4, pixelAlignedPanning: true };
-			gui.add( params, 'pixelSize' ).min( 1 ).max( 16 ).step( 1 )
-				.onChange( () => {
+        gui = new GUI();
+        params = { pixelSize: 6, normalEdgeStrength: .3, depthEdgeStrength: .4, pixelAlignedPanning: true };
+        gui.add( params, 'pixelSize' ).min( 1 ).max( 16 ).step( 1 )
+            .onChange( () => {
 
-					renderPixelatedPass.setPixelSize( params.pixelSize );
+                renderPixelatedPass.setPixelSize( params.pixelSize );
 
-				} );
-			gui.add( renderPixelatedPass, 'normalEdgeStrength' ).min( 0 ).max( 2 ).step( .05 );
-			gui.add( renderPixelatedPass, 'depthEdgeStrength' ).min( 0 ).max( 1 ).step( .05 );
-			gui.add( params, 'pixelAlignedPanning' );
+            } );
+        gui.add( renderPixelatedPass, 'normalEdgeStrength' ).min( 0 ).max( 2 ).step( .05 );
+        gui.add( renderPixelatedPass, 'depthEdgeStrength' ).min( 0 ).max( 1 ).step( .05 );
+        gui.add( params, 'pixelAlignedPanning' );
 
-			// textures
-            const parameters = {
-                grassMaterialColor: '#8ac165',
-                stoneMaterialColor: '#ffeded'
-            }
-			const textureLoader = new THREE.TextureLoader();
-			const gradientTexture = textureLoader.load('textures/gradients/3.jpeg')
-            gradientTexture.magFilter = THREE.NearestFilter
+        // textures
+        const parameters = {
+            grassMaterialColor: '#8ac165',
+            stoneMaterialColor: '#ffeded'
+        }
+        const textureLoader = new THREE.TextureLoader();
+        const gradientTexture = textureLoader.load('textures/gradients/3.jpeg')
+        gradientTexture.magFilter = THREE.NearestFilter
 
-            const grassMaterial = new THREE.MeshStandardMaterial({
-                color: parameters.grassMaterialColor,
-                
-            })
-            const stoneMaterial = new THREE.MeshStandardMaterial({
-                color: parameters.stoneMaterialColor,
-               
-            })
+        const grassMaterial = new THREE.MeshStandardMaterial({
+            color: parameters.grassMaterialColor,
+            
+        })
+        const stoneMaterial = new THREE.MeshStandardMaterial({
+            color: parameters.stoneMaterialColor,
+            
+        })
 
-			// meshes
+        // meshes
 
-			const box = new THREE.Mesh(
-                new THREE.BoxGeometry(.3,.3,.3),
-                stoneMaterial
-            )
-            box.position.y = .25
-            box.castShadow = true
-            box.receiveShadow = true
-            scene.add(box)
+        const box = new THREE.Mesh(
+            new THREE.BoxGeometry(.3,.3,.3),
+            stoneMaterial
+        )
+        box.position.y = .25
+        box.castShadow = true
+        box.receiveShadow = true
+        scene.add(box)
 
-			const planeSideLength = 2;
-			const planeMesh = new THREE.Mesh(
-				new THREE.PlaneGeometry( planeSideLength, planeSideLength ),
-                grassMaterial
-			);
-			planeMesh.receiveShadow = true;
-			planeMesh.rotation.x = - Math.PI / 2;
-			scene.add( planeMesh );
+        const box2 = new THREE.Mesh(
+            new THREE.BoxGeometry(.3,.8,.3),
+            stoneMaterial
+        )
+        box2.position.x = .4
+        box2.position.y = .4
+        box2.position.z = -0.4
+        box2.rotation.y = Math.PI * 0.25
+        box2.castShadow = true
+        box2.receiveShadow = true
+        scene.add(box2)
 
-			const radius = .2;
-			const geometry = new THREE.IcosahedronGeometry( radius );
-			crystalMesh = new THREE.Mesh(
-				geometry,
-				new THREE.MeshPhongMaterial( {
-					color: 0x68b7e9,
-					emissive: 0x4f7e8b,
-					shininess: 10,
-					specular: 0xffffff
-				} )
-			);
-			crystalMesh.receiveShadow = true;
-			crystalMesh.castShadow = true;
-			scene.add( crystalMesh );
+        const planeSideLength = 2;
+        const planeMesh = new THREE.Mesh(
+            new THREE.PlaneGeometry( planeSideLength, planeSideLength ),
+            grassMaterial
+        );
+        planeMesh.receiveShadow = true;
+        planeMesh.rotation.x = - Math.PI / 2;
+        scene.add( planeMesh );
 
-			// lights
+        const radius = .2;
+        const geometry = new THREE.IcosahedronGeometry( radius );
+        crystalMesh = new THREE.Mesh(
+            geometry,
+            new THREE.MeshPhongMaterial( {
+                color: 0x68b7e9,
+                emissive: 0x4f7e8b,
+                shininess: 10,
+                specular: 0xffffff
+            } )
+        );
+        crystalMesh.receiveShadow = true;
+        crystalMesh.castShadow = true;
+        scene.add( crystalMesh );
 
-			scene.add( new THREE.AmbientLight( 0x757f8e, 3 ) );
+        // lights
 
-			const directionalLight = new THREE.DirectionalLight( 0xfffecd, 1.5 );
-			directionalLight.position.set( 100, 100, 100 );
-			directionalLight.castShadow = true;
-			directionalLight.shadow.mapSize.set( 2048, 2048 );
-			scene.add( directionalLight );
+        scene.add( new THREE.AmbientLight( 0x757f8e, 3 ) );
 
-			const spotLight = new THREE.SpotLight( 0xffc100, 10, 10, Math.PI / 16, .02, 2 );
-			spotLight.position.set( 2, 2, 0 );
-			const target = spotLight.target;
-			scene.add( target );
-			target.position.set( 0, 0, 0 );
-			spotLight.castShadow = true;
-			scene.add( spotLight );
+        const directionalLight = new THREE.DirectionalLight( 0xfffecd, 1.5 );
+        directionalLight.position.set( 100, 100, 100 );
+        directionalLight.castShadow = true;
+        directionalLight.shadow.mapSize.set( 2048, 2048 );
+        scene.add( directionalLight );
 
-		}
+        const spotLight = new THREE.SpotLight( 0xffc100, 10, 10, Math.PI / 16, .02, 2 );
+        spotLight.position.set( 2, 2, 0 );
+        const target = spotLight.target;
+        scene.add( target );
+        target.position.set( 0, 0, 0 );
+        spotLight.castShadow = true;
+        scene.add( spotLight );
+
+    }
 
 		function onWindowResize() {
 
